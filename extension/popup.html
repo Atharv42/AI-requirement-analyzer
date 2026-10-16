@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>AI Requirement Analyzer</title>
+
+    <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="header">
+
+            <h1>AI Requirement Analyzer</h1>
+
+            <p>
+                Analyze meeting requirements using AI
+            </p>
+
+        </div>
+
+
+        <!-- TRANSCRIPT -->
+
+        <div class="section">
+
+            <div class="section-title">
+
+                <h2>Meeting Transcript</h2>
+
+                <button
+                    id="captureBtn"
+                    class="small-btn"
+                >
+                    Capture Page
+                </button>
+
+            </div>
+
+
+            <p
+                id="analysisStatus"
+                class="status-text"
+            >
+                Waiting for captions
+            </p>
+
+
+            <textarea
+                id="transcript"
+                readonly
+                placeholder="Live captions from Google Meet will appear here automatically. Turn on Live Captions in the meeting."
+            ></textarea>
+
+
+            <div class="button-row">
+
+                <button
+                    id="analyzeBtn"
+                    class="primary-btn"
+                >
+                    Analyze Transcript
+                </button>
+
+                <button
+                    id="clearBtn"
+                    class="secondary-btn"
+                >
+                    Clear
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI ANALYSIS -->
+
+        <div class="section">
+
+            <h2>AI Analysis</h2>
+
+            <div
+                id="analysis"
+                class="output"
+            >
+                No analysis yet.
+            </div>
+
+        </div>
+
+
+        <!-- CLARIFICATIONS -->
+
+        <div class="section">
+
+            <h2>Clarification Answers</h2>
+
+            <p
+                id="questionProgress"
+                class="status-text"
+            ></p>
+
+            <p
+                id="questionText"
+                class="question-text"
+            >
+                Clarification questions will appear here after analysis.
+            </p>
+
+            <textarea
+                id="answerInput"
+                class="answer-input"
+                placeholder="Enter your answer here"
+            ></textarea>
+
+            <div class="button-row">
+
+                <button
+                    id="submitAnswerBtn"
+                    class="primary-btn"
+                >
+                    Submit Answer
+                </button>
+
+            </div>
+
+            <p
+                id="clarificationDone"
+                class="status-text"
+            ></p>
+
+            <!-- Hidden: same Question/Answer format used by Generate Requirements -->
+            <textarea
+                id="clarifications"
+                hidden
+            ></textarea>
+
+        </div>
+
+
+        <!-- GENERATION BUTTONS -->
+
+        <div class="button-row">
+
+            <button
+                id="generateBtn"
+                class="primary-btn"
+            >
+                Generate Requirements
+            </button>
+
+            <button
+                id="evaluateBtn"
+                class="primary-btn"
+            >
+                Compare & Evaluate
+            </button>
+
+        </div>
+
+
+        <!-- REQUIREMENTS -->
+
+        <div class="section">
+
+            <h2>Generated Requirements</h2>
+
+            <div
+                id="requirements"
+                class="output"
+            >
+                Requirements will appear here.
+            </div>
+
+        </div>
+
+
+        <!-- EVALUATION -->
+
+        <div class="section">
+
+            <h2>Quality Evaluation</h2>
+
+            <div
+                id="evaluation"
+                class="output"
+            >
+                Evaluation will appear here.
+            </div>
+
+        </div>
+
+
+        <!-- EXPORT -->
+
+<div class="section">
+
+    <h2>Export Report</h2>
+
+    <div class="export-row">
+
+        <button
+            id="exportTxtBtn"
+            class="secondary-btn"
+        >
+            Export TXT
+        </button>
+
+        <button
+            id="exportDocxBtn"
+            class="secondary-btn"
+        >
+            Export DOCX
+        </button>
+
+        <button
+            id="exportPdfBtn"
+            class="secondary-btn"
+        >
+            Export PDF
+        </button>
+
+    </div>
+
+</div>
+
+
+        <div class="footer">
+
+            AI-Powered Requirement Engineering
+
+        </div>
+
+    </div>
+
+
+    <script src="popup.js"></script>
+
+</body>
+
+</html>

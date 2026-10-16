@@ -1,93 +1,140 @@
-# Home Appliance Repair Booking System
+# AI Requirement Analyzer
 
-A lightweight Java console application that models the lifecycle of a home-appliance repair booking. It uses an explicit state machine to ensure that booking, payment, review, technician, cancellation, and completion events occur only in valid sequences.
+AI Requirement Analyzer is a Chrome extension and local FastAPI service that turns live meeting captions into clearer, more testable software requirements. It identifies ambiguities, guides a user through clarification questions, generates functional and non-functional requirements, compares quality before and after clarification, and exports a report.
 
-This project was created as an IT314 Lab 8 submission. Despite the repository name, it is a repair-booking workflow simulator rather than an AI requirements analyzer.
+> The extension reads live-caption text only. Turn on captions in the meeting before using it.
 
-## Features
+## What it does
 
-- Interactive command-line menu for creating and progressing a sample booking
-- State-machine validation for every workflow event
-- Simulated payment processing with up to three attempts
-- Full simulated refunds for eligible cancellations and service-center rejections
-- Protection against invalid transitions, with the current state left unchanged
-- Built-in automated test driver covering successful, failed, cancelled, rejected, and invalid flows
+1. Collects live captions from a supported meeting page and stores the transcript in Chrome local storage.
+2. Sends the transcript to the local API for AI-assisted ambiguity analysis and up to four clarification questions.
+3. Captures answers one question at a time.
+4. Generates refined functional and non-functional requirements.
+5. Compares requirements produced with and without clarifications across clarity, completeness, testability, consistency, and overall quality.
+6. Exports the transcript, analysis, answers, requirements, and evaluation as TXT, DOCX, or PDF.
 
-## Workflow
+## Supported meeting pages
+
+- **Google Meet** — primary integration; enable Live Captions to collect transcript text.
+- **Zoom** — included as a best-effort caption selector integration. Its page structure can change, so caption collection may require maintenance.
+
+The extension can also manually re-scan the current page with **Capture Page**.
+
+## Architecture
 
 ```text
-BOOKING_CREATED
-  -> PAYMENT_PENDING
-     -> CENTER_REVIEW
-        -> BOOKING_CONFIRMED
-           -> TECHNICIAN_ASSIGNED
-              -> TECHNICIAN_EN_ROUTE
-                 -> SERVICE_IN_PROGRESS
-                    -> SERVICE_COMPLETED
-
-PAYMENT_PENDING -> PAYMENT_FAILED -> PAYMENT_PENDING  (retry, maximum 3 attempts)
-CENTER_REVIEW   -> BOOKING_REJECTED                  (full refund)
-PAYMENT_PENDING, PAYMENT_FAILED, or CENTER_REVIEW -> CANCELLED
+Google Meet / Zoom captions
+           │
+           ▼
+Chrome extension (content.js)
+  ├─ deduplicates and stores transcript locally
+  └─ triggers analysis after 10 seconds without new captions
+           │ HTTP (localhost)
+           ▼
+FastAPI backend ──► Groq API (openai/gpt-oss-20b)
+           │
+           ▼
+Extension popup: analysis → clarifications → requirements → evaluation/export
 ```
 
-`BOOKING_REJECTED`, `CANCELLED`, and `SERVICE_COMPLETED` are terminal states. Cancellation is intentionally not permitted once a technician has been assigned.
+## Prerequisites
 
-## Requirements
+- Google Chrome or another Chromium-based browser with extension developer mode
+- Python 3.10 or later
+- A [Groq API key](https://console.groq.com/keys)
+- Meeting captions enabled in Google Meet or Zoom
 
-- Java Development Kit (JDK) 17 or later
-- No external dependencies or build tools
+## Setup
 
-The project was tested with OpenJDK 21.
+### 1. Configure and start the backend
 
-## Getting started
-
-From the project root, compile and start the interactive application:
+From the project root:
 
 ```powershell
-cd src
-javac *.java
-java Main
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-The menu lets you create/view a booking, process payment, accept or reject the booking, manage technician and service events, cancel an eligible booking, and run the test suite.
+Create `backend/.env` and add your Groq API key:
 
-## Run the automated tests
+```env
+GROQ_API_KEY=your_groq_api_key
+```
+
+Start the local API:
 
 ```powershell
-cd src
-javac *.java
-java Main --tests
+uvicorn main:app --reload
 ```
 
-The test driver runs seven scenarios and prints `OVERALL RESULT: PASS` when all succeed.
+The service listens at `http://127.0.0.1:8000`. Confirm it is available at `http://127.0.0.1:8000/health`.
 
-| Test | Scenario |
-| --- | --- |
-| TC01 | End-to-end successful booking and repair |
-| TC02 | Payment failure followed by a successful retry |
-| TC03 | Service-center rejection and refund |
-| TC04 | Invalid transition handling |
-| TC05 | Cancellation before technician assignment and refund |
-| TC06 | Rejected cancellation after service starts or completes |
-| TC07 | Full technician and service-state progression |
+### 2. Load the Chrome extension
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode**.
+3. Select **Load unpacked**.
+4. Choose the repository's `extension` folder.
+5. Pin the **AI Requirement Analyzer** extension if desired.
+
+The extension is configured to call the backend at `http://127.0.0.1:8000`. Keep the backend running while you use the extension.
+
+## How to use it
+
+1. Join a Google Meet or Zoom meeting and turn on live captions.
+2. Open the extension popup. Captions are collected automatically; use **Capture Page** to scan immediately.
+3. Select **Analyze Transcript** to identify ambiguities and obtain clarification questions. Live capture also schedules analysis after caption activity stops for 10 seconds.
+4. Submit answers to the clarification questions.
+5. Select **Generate Requirements** to create refined functional and non-functional requirements.
+6. Select **Compare & Evaluate** to assess requirements generated with and without clarification answers.
+7. Export the complete report as TXT, DOCX, or PDF.
+
+## Backend API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/` | Returns a service status message |
+| `GET` | `/health` | Health check |
+| `POST` | `/analyze-transcript` | Detects ambiguities and creates clarification questions |
+| `POST` | `/generate-requirements` | Produces refined requirements from a transcript and answers |
+| `POST` | `/evaluate` | Compares requirements before and after clarification |
+| `POST` | `/export/txt` | Downloads a text report |
+| `POST` | `/export/docx` | Downloads a Word report |
+| `POST` | `/export/pdf` | Downloads a PDF report |
+
+The analysis endpoint expects `{ "transcript": "..." }`. Requirement generation and evaluation accept a transcript plus an optional `clarifications` array of `{ "question": "...", "answer": "..." }` objects.
 
 ## Project structure
 
 ```text
 .
-├── src/
-│   ├── Main.java          # CLI entry point and automated test driver
-│   ├── Booking.java       # Booking entity and transition rules
-│   ├── BookingState.java  # Workflow states
-│   └── Payment.java       # Payment-attempt and refund simulation
-├── 202401230_Lab8_UML.pdf
-├── 202401230_Lab8_Report.pdf
-├── 202401230_Lab8_TestResults.pdf
-└── 202401230_Lab8_RunInstructions.txt
+├── backend/
+│   ├── main.py          # FastAPI routes and report exports
+│   ├── ai_service.py    # Groq client and model calls
+│   ├── prompts.py       # Analysis, generation, and evaluation prompts
+│   ├── models.py        # Request schemas
+│   └── requirements.txt # Python dependencies
+├── extension/
+│   ├── manifest.json    # Chrome Extension Manifest V3 configuration
+│   ├── content.js       # Caption monitoring, storage, and live analysis
+│   ├── popup.html       # Extension interface
+│   ├── popup.js         # Popup workflow and backend requests
+│   └── popup.css        # Popup styling
+└── README.md
 ```
 
-## Design notes
+## Data and security notes
 
-`Booking` is the workflow authority: each public event method verifies that the booking is in an allowed source state before updating it. Invalid events return a descriptive message without mutating the booking. `Payment` separately tracks amount, attempt count, paid status, and refund status, which keeps payment concerns isolated from the workflow transitions.
+- Captured transcripts, analysis results, and clarification state are stored in `chrome.storage.local` until cleared from the popup.
+- Transcripts and clarification answers are sent to your local backend, which forwards prompts to Groq for AI processing.
+- Keep `backend/.env` private. It is ignored by Git and must never contain a key committed to source control.
+- The backend currently enables permissive CORS for local development. Restrict allowed origins before deploying it outside a trusted local environment.
 
-The included PDFs contain the UML, report, and recorded test results for the lab submission.
+## Technology stack
+
+- Chrome Extension Manifest V3, vanilla HTML/CSS/JavaScript
+- FastAPI and Uvicorn
+- Groq Python SDK with `openai/gpt-oss-20b`
+- `python-docx` and ReportLab for DOCX/PDF exports

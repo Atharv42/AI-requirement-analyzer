@@ -1,0 +1,43 @@
+{
+    "manifest_version": 3,
+
+    "name": "AI Requirement Analyzer",
+
+    "version": "1.0",
+
+    "description": "AI-powered live meeting requirement analysis",
+
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting"
+    ],
+
+    "host_permissions": [
+        "http://127.0.0.1:8000/*",
+        "https://*.zoom.us/*",
+        "https://app.zoom.us/*",
+        "https://meet.google.com/*"
+    ],
+
+    "action": {
+        "default_popup": "popup.html",
+        "default_title": "AI Requirement Analyzer"
+    },
+
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.zoom.us/*",
+                "https://app.zoom.us/*",
+                "https://meet.google.com/*"
+            ],
+
+            "js": [
+                "content.js"
+            ],
+
+            "run_at": "document_idle"
+        }
+    ]
+}
